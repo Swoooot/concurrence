@@ -34,8 +34,22 @@ void initializeGrid(gridElement (*grid)[AREA_LENGTH]){
 	}
 }
 
+void addPerson(gridElement (*grid)[AREA_LENGTH], int x ,int y, int id){
+	person p;
+	p.id=id;
+	p.x=x;
+	p.y=y;
+	//Faut l'ajotuer au 4*4
+	for(int j=0;j<4;j++){
+		for(int k=0;k<4;k++){
+			grid[y+j][x+k].st=OCCUPIED;
+			grid[y+j][x+k].p=p;
+		}
+	}
+}
+
 void fillGrid(gridElement (*grid)[AREA_LENGTH]){
-	int added=0;
+	int addedId=0;
 
 	for(int i=0;i<amountOfPeople;i++){
 		int newX=rand()%(AREA_LENGTH-DELTA);
@@ -51,28 +65,14 @@ void fillGrid(gridElement (*grid)[AREA_LENGTH]){
 			}
 		}
 		//Si on refait pas de rand on ajoute la personne a la grille
+		addPerson(grid,newX,newY,addedId);
 		printf("x: %d\n",newX);
 		printf("y: %d\n",newY);
 		//grid[newY][newX].st=OCCUPIED;
-		person p;
-		p.id=added;
-		p.x=newX;
-		p.y=newY;
-		//Faut l'ajotuer au 4*4
-		for(int j=0;j<4;j++){
-			for(int k=0;k<4;k++){
-				grid[newY+j][newX+k].st=OCCUPIED;
-				grid[newY+j][newX+k].p=p;
-			}
-		}
+		
 		//grid[newY][newX].p=p;
 
-		added++;
-	}
-	for(int x=AREA_LENGTH-DELTA;x<AREA_LENGTH;x++){
-		for(int y=AREA_WIDTH-DELTA;y<AREA_WIDTH;y++){
-			grid[y][x].st=FREE;
-		}
+		addedId++;
 	}
 
 }
@@ -161,7 +161,7 @@ int main(void){
 	gridElement grid[AREA_WIDTH][AREA_LENGTH];
 	initializeGrid(grid);
 	amountOfPeople=15;
-	//fillGrid(grid);
+	fillGrid(grid);
 
 	for(int y=0;y<AREA_WIDTH;y++){
 		printf("%d: ",y);
