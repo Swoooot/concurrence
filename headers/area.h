@@ -5,6 +5,10 @@
 		FREE,OCCUPIED
 	} status;
 
+	typedef enum direction{
+		NORTH,NORTHWEST,WEST,SOUTHWEST,SOUTH,SOUTHEAST,EAST,NORTHEAST
+	} direction;
+
 	typedef struct person{
 		//Les coordonnées x et y correspondent au pixel haut gauche de la personne
 		//Chaque personne occupe 4*4pixels
