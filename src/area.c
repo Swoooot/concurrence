@@ -25,7 +25,7 @@ void initializeGrid(gridElement (*grid)[AREA_LENGTH]){
 		for(int y=0;y<=56;y++){
 			grid[y][x].st=OCCUPIED;
 		}
-		for(int y=72;y<AREA_WIDTH;y++){
+		for(int y=73;y<AREA_WIDTH;y++){
 			grid[y][x].st=OCCUPIED;
 		}
 	}
@@ -83,74 +83,54 @@ direction *shortestDistant(gridElement (*grid)[AREA_LENGTH], person p, int goalX
 }
 
 
-void movePerson(gridElement (*grid)[AREA_LENGTH], direction dir, person movingPerson){
-	if(dir==NORTH){
-		movingPerson.y--;
-		for(int x=0;x<DELTA;x++){
-			grid[movingPerson.x+x][movingPerson.y].p=movingPerson;
-			grid[movingPerson.x+x][movingPerson.y].st=OCCUPIED;
+void movePerson(gridElement (*grid)[AREA_LENGTH], direction dir, person *movingPerson){
+	int deltaX=0;
+	int deltaY=0;
 
-		//	grid[movingPerson.x+x][movingPerson.y+DELTA].p=NULL;
-			grid[movingPerson.x+x][movingPerson.y+DELTA].st=FREE;
-		}
-	}
+	//On determine le delta sur les coordonnes selon la direction
 	if(dir==NORTHWEST){
-		movingPerson.x--;
-		movingPerson.y--;
-		for(int x=0;x<DELTA;x++){
-			grid[movingPerson.x+x][movingPerson.y].p=movingPerson;
-			grid[movingPerson.x+x][movingPerson.y].st=OCCUPIED;
-
-		//	grid[movingPerson.x+x][movingPerson.y+DELTA].p=NULL;
-			grid[movingPerson.x+x][movingPerson.y+DELTA].st=FREE;
-		}
-		for(int y=0;y<DELTA;y++){
-			grid[movingPerson.x][movingPerson.y+y].p=movingPerson;
-			grid[movingPerson.x][movingPerson.y+y].st=OCCUPIED;
-
-		//	grid[movingPerson.x+DELTA][movingPerson.y+y].p=NULL;
-			grid[movingPerson.x+DELTA][movingPerson.y+y].st=FREE;
-		}
+		deltaX=-1;
+		deltaY=-1;
 	}
-	if(dir==WEST){
-		movingPerson.x--;
-		for(int y=0;y<DELTA;y++){
-			grid[movingPerson.x][movingPerson.y+y].p=movingPerson;
-			grid[movingPerson.x][movingPerson.y+y].st=OCCUPIED;
-
-		//	grid[movingPerson.x+DELTA][movingPerson.y+y].p=NULL;
-			grid[movingPerson.x+DELTA][movingPerson.y+y].st=FREE;
-		}
+	else if(dir==NORTH){
+		deltaY=-1;
+	}
+	else if(dir==WEST){
+		deltaX=-1;
 	}
 	else if(dir==SOUTHWEST){
-		movingPerson.x--;
-		movingPerson.y++;
-		for(int x=0;x<DELTA;x++){
-			grid[movingPerson.x+x][movingPerson.y+DELTA].p=movingPerson;
-			grid[movingPerson.x+x][movingPerson.y+DELTA].st=OCCUPIED;
-
-		//	grid[movingPerson.x+x][movingPerson.y].p=NULL;
-			grid[movingPerson.x+x][movingPerson.y].st=FREE;
-		}
-		for(int y=0;y<DELTA;y++){
-			grid[movingPerson.x][movingPerson.y+y].p=movingPerson;
-			grid[movingPerson.x][movingPerson.y+y].st=OCCUPIED;
-
-		//	grid[movingPerson.x+DELTA][movingPerson.y+y].p=NULL;
-			grid[movingPerson.x+DELTA][movingPerson.y+y].st=FREE;
-		}
-
+		deltaX=-1;
+		deltaY=1;
 	}
 	else if(dir==SOUTH){
-		movingPerson.y++;
-		for(int x=0;x<DELTA;x++){
-			grid[movingPerson.x+x][movingPerson.y+DELTA].p=movingPerson;
-			grid[movingPerson.x+x][movingPerson.y+DELTA].st=OCCUPIED;
+		deltaY=1;
+	}
 
-		//	grid[movingPerson.x+x][movingPerson.y].p=NULL;
-			grid[movingPerson.x+x][movingPerson.y].st=FREE;
+	//On deplace la personne
+	movingPerson->x+=deltaX;
+	movingPerson->y+=deltaY;
+
+	if(deltaY!=0){
+		for(int x=0;x<DELTA;x++){
+			grid[movingPerson->y][movingPerson->x+x].p=*movingPerson;
+			grid[movingPerson->y][movingPerson->x+x].st=OCCUPIED;
+
+			grid[movingPerson->y+DELTA][movingPerson->x+x].st=FREE;
 		}
 	}
+	if(deltaX!=0){
+
+		for(int y=0;y<DELTA;y++){
+
+			grid[movingPerson->y+y][movingPerson->x].p=*movingPerson;
+			grid[movingPerson->y+y][movingPerson->x].st=OCCUPIED;
+
+			grid[movingPerson->y+y][movingPerson->x+DELTA].st=FREE;
+
+		}
+	}
+
+
 	//Les autres directions ne sont pas utilisees dans ce programme
 }
 
@@ -163,13 +143,33 @@ int main(void){
 	amountOfPeople=15;
 	fillGrid(grid);
 
-	for(int y=0;y<AREA_WIDTH;y++){
-		printf("%d: ",y);
-		for(int x=0;x<AREA_LENGTH;x++){
+	/*person testP;
+	testP.x=400;
+	testP.y=100;
+	testP.id=30;
+	*/
+	addPerson(grid,400,100,30);
+	//grid[100][400].st=OCCUPIED;
+	//grid[100][400].p=testP;
+	for(int y=0;y<AREA_WIDTH;y+=4){
+	//	printf("%d: ",y);
+		for(int x=0;x<AREA_LENGTH;x+=4){
 			printf("%d|",grid[y][x].st);
 		}
 		printf("\n");
 	}
+	printf("x: %d, y: %d st:%d, id:%d\n",403,100,grid[100][403].st,grid[100][403].p.id);
+	printf("x: %d, y: %d st:%d, id:%d\n",400,100,grid[100][402].st,grid[100][402].p.id);
+	printf("x: %d, y: %d st:%d, id:%d\n",400,100,grid[100][401].st,grid[100][401].p.id);	
+	printf("x: %d, y: %d st:%d, id:%d\n",400,100,grid[100][400].st,grid[100][400].p.id);
+	printf("x: %d, y: %d st:%d\n",399,100,grid[100][399].st);
+	movePerson(grid,WEST,&grid[100][400].p);
+	printf("\n\n");
+	printf("x: %d, y: %d st:%d\n",403,100,grid[100][403].st);
+	printf("x: %d, y: %d st:%d, id:%d\n",403,100,grid[100][402].st,grid[100][403].p.id);
+	printf("x: %d, y: %d st:%d, id:%d\n",403,100,grid[100][401].st,grid[100][402].p.id);
+	printf("x: %d, y: %d st:%d, id:%d\n",400,100,grid[100][400].st,grid[100][401].p.id);
+	printf("x: %d, y: %d st:%d, id:%d\n",399,100,grid[100][399].st,grid[100][400].p.id);
 
 	/*for(int x=0;x<AREA_LENGTH;x++){
 		for(int y=0;y<AREA_WIDTH;y++){
