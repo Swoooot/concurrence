@@ -77,7 +77,40 @@ void fillGrid(gridElement (*grid)[AREA_LENGTH]){
 
 }
 
-direction *shortestDistant(gridElement (*grid)[AREA_LENGTH], person p, int goalX, int goalY){
+direction *shortestDistant(gridElement (*grid)[AREA_LENGTH], person p, int goalX, int goalY){int tableauDistance[5];
+	direction tableauDirection[5];
+	int distanceNord = sqrt((((p.x)-goalX)*((p.x)-goalX))+(((p.y-1)-goalY)*((p.y-1)-goalY)));
+	int distanceSud = sqrt((((p.x)-goalX)*((p.x)-goalX))+(((p.y+1)-goalY)*((p.y+1)-goalY)));
+	int distanceOuest = sqrt((((p.x-1)-goalX)*((p.x-1)-goalX))+(((p.y)-goalY)*((p.y)-goalY)));
+	int distanceNordOuest = sqrt((((p.x-1)-goalX)*((p.x-1)-goalX))+(((p.y-1)-goalY)*((p.y-1)-goalY)));
+	int distanceSudOuest = sqrt((((p.x-1)-goalX)*((p.x-1)-goalX))+(((p.y+1)-goalY)*((p.y+1)-goalY)));
+
+	tableauDistance[0] = distanceNord;
+	tableauDirection[0] = NORTH;
+	tableauDistance[1] = distanceSud;
+	tableauDirection[1] = SOUTH;
+	tableauDistance[2] = distanceOuest;
+	tableauDirection[2] = WEST;
+	tableauDistance[3] = distanceNordOuest;
+	tableauDirection[3] = NORTHWEST;
+	tableauDistance[4] = distanceSudOuest;
+	tableauDirection[4] = SOUTHWEST;
+	
+	int i, j;
+	   for (i =1; i < 5; ++i) {
+	       int elem = tableauDistance[i];
+	       direction element = tableauDirection[i];
+	       for (j = i; j > 0 && tableauDistance[j-1] > elem; j--){
+	           	tableauDistance[j] = tableauDistance[j-1];
+	       		tableauDirection[j] = tableauDirection[j-1];}
+
+	       tableauDistance[j] = elem;
+	       tableauDirection[j] = element;
+	   }
+	
+	
+	return(tableauDirection);
+	
 	//On calcule la distance pour chaque direction et met dans un tableau trie
 
 }
