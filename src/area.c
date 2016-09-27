@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <math.h>
+#include <stdbool.h>
+
 #include "../headers/area.h"
 
 
@@ -9,9 +12,15 @@
 #define DELTA 4
 
 int amountOfPeople;
+person *allp;
 
 //On initialise la grille avec les murs
 void initializeGrid(gridElement (*grid)[AREA_LENGTH]){
+	for(int x=0;x<AREA_LENGTH;x++){
+		for(int y=0;y<AREA_WIDTH;y++){
+			grid[y][x].st=FREE;
+		}
+	}
 	//Ajout des murs
 	for(int x=0;x<16;x++){
 		for(int y=0;y<=60;y++){
@@ -29,9 +38,10 @@ void initializeGrid(gridElement (*grid)[AREA_LENGTH]){
 			grid[y][x].st=OCCUPIED;
 		}
 	}
-	for(int x=160;x<AREA_LENGTH;x++){
+	/*for(int x=160;x<AREA_LENGTH;x++){
 		grid[AREA_WIDTH-1][x].st=FREE;
 	}
+	*/
 }
 
 void addPerson(gridElement (*grid)[AREA_LENGTH], int x ,int y, int id){
@@ -39,6 +49,7 @@ void addPerson(gridElement (*grid)[AREA_LENGTH], int x ,int y, int id){
 	p.id=id;
 	p.x=x;
 	p.y=y;
+	allp[id]=p;
 	//Faut l'ajotuer au 4*4
 	for(int j=0;j<4;j++){
 		for(int k=0;k<4;k++){
@@ -54,31 +65,38 @@ void fillGrid(gridElement (*grid)[AREA_LENGTH]){
 	for(int i=0;i<amountOfPeople;i++){
 		int newX=rand()%(AREA_LENGTH-DELTA);
 		int newY=rand()%(AREA_WIDTH-DELTA);
-		for(int j=0;j<4;j++){
-			for(int k=0;k<4;k++){
-				if(grid[newY+j][newX+k].st==OCCUPIED){
-					srand(time(NULL));
-					newX=rand()%(AREA_LENGTH-DELTA);
-					newY=rand()%(AREA_WIDTH-DELTA);
-					//Refaire un rand
+		bool done=false;
+		while(done==false){
+			bool ok=true;
+			for(int j=0;j<4;j++){
+				for(int k=0;k<4;k++){
+					if(grid[newY+j][newX+k].st==OCCUPIED){
+						srand(time(NULL));
+						newX=rand()%(AREA_LENGTH-DELTA);
+						newY=rand()%(AREA_WIDTH-DELTA);
+						//Refaire un rand
+						ok=false;
+					}
 				}
 			}
+			if(ok==true) done=true;
 		}
 		//Si on refait pas de rand on ajoute la personne a la grille
 		addPerson(grid,newX,newY,addedId);
-		printf("x: %d\n",newX);
-		printf("y: %d\n",newY);
+	//	printf("x: %d\n",newX);
+	//	printf("y: %d\n",newY);
 		//grid[newY][newX].st=OCCUPIED;
 		
 		//grid[newY][newX].p=p;
-
+		
 		addedId++;
 	}
 
 }
 
-direction *shortestDistant(gridElement (*grid)[AREA_LENGTH], person p, int goalX, int goalY){int tableauDistance[5];
-	direction tableauDirection[5];
+void shortestDistant(gridElement (*grid)[AREA_LENGTH], person p, int goalX, int goalY, direction *tableauDirection){
+	int tableauDistance[5];
+	//direction tableauDirection[5];
 	int distanceNord = sqrt((((p.x)-goalX)*((p.x)-goalX))+(((p.y-1)-goalY)*((p.y-1)-goalY)));
 	int distanceSud = sqrt((((p.x)-goalX)*((p.x)-goalX))+(((p.y+1)-goalY)*((p.y+1)-goalY)));
 	int distanceOuest = sqrt((((p.x-1)-goalX)*((p.x-1)-goalX))+(((p.y)-goalY)*((p.y)-goalY)));
@@ -109,21 +127,63 @@ direction *shortestDistant(gridElement (*grid)[AREA_LENGTH], person p, int goalX
 	   }
 	
 	
-	return(tableauDirection);
+	//return(tableauDirection);
 	
 	//On calcule la distance pour chaque direction et met dans un tableau trie
 
 }
 
+bool canMove(gridElement (*grid)[AREA_LENGTH], int x, int y, int deltaX, int deltaY){
+	int newX=x+deltaX;
+	int newY=y+deltaY;
 
-void movePerson(gridElement (*grid)[AREA_LENGTH], direction dir, person *movingPerson){
+	if(deltaY==-1){
+		for(int dx=0;dx<DELTA;dx++){
+			if(grid[newY][newX+dx].st!=FREE){
+				//printf("x: %d, y: %d\n",newX+dx,newY);
+				return false;
+			}
+		}
+	}
+	else if(deltaY==1){
+		for(int dx=0;dx<DELTA;dx++){
+			if(grid[y+DELTA][newX+dx].st!=FREE){
+			//	printf("x: %d, y: %d\n",newX+dx,newY);
+				return false;
+			}
+		}
+	}
+	if(deltaX!=0){
+		for(int dy=0;dy<DELTA;dy++){
+			if(grid[newY+dy][newX].st!=FREE){
+				if(newX<4){
+					printf("x: %d, y: %d, st:%d \n",newX,newY+dy,grid[newY+dy][newX].st);
+				}
+				return false;
+			}
+		}
+	}
+	return true;
+}
+
+void removePerson(gridElement (*grid)[AREA_LENGTH], person *p){
+	for(int x=p->x;x<DELTA;x++){
+		for(int y=p->y;y<p->y+DELTA;y++){
+			//printf("id: %d, x: %d, y: %d\n",p->id,x,y);
+			grid[y][x].st=FREE;
+		}
+	}
+	p->id=-1;
+}
+
+bool movePerson(gridElement (*grid)[AREA_LENGTH], direction dir, person *movingPerson){
 	int deltaX=0;
 	int deltaY=0;
 
 	//On determine le delta sur les coordonnes selon la direction
 	if(dir==NORTHWEST){
 		deltaX=-1;
-		deltaY=-1;
+		deltaY=(-1);
 	}
 	else if(dir==NORTH){
 		deltaY=-1;
@@ -132,39 +192,93 @@ void movePerson(gridElement (*grid)[AREA_LENGTH], direction dir, person *movingP
 		deltaX=-1;
 	}
 	else if(dir==SOUTHWEST){
-		deltaX=-1;
+		deltaX=(-1);
 		deltaY=1;
 	}
 	else if(dir==SOUTH){
 		deltaY=1;
 	}
 
-	//On deplace la personne
-	movingPerson->x+=deltaX;
-	movingPerson->y+=deltaY;
+	if(canMove(grid,movingPerson->x,movingPerson->y,deltaX,deltaY)==false){
+		//printf("id: %d, dir: %d, x: %d, y: %d\n",movingPerson->id,dir,movingPerson->x,movingPerson->y);
+		return false;
+	}
+	
+	int newX=movingPerson->x+deltaX;
+	int newY=movingPerson->y+deltaY;
 
-	if(deltaY!=0){
+	if(deltaY==-1){
 		for(int x=0;x<DELTA;x++){
-			grid[movingPerson->y][movingPerson->x+x].p=*movingPerson;
-			grid[movingPerson->y][movingPerson->x+x].st=OCCUPIED;
+			grid[newY][newX+x].p=*movingPerson;
+			grid[newY][newX+x].st=OCCUPIED;
 
-			grid[movingPerson->y+DELTA][movingPerson->x+x].st=FREE;
+			grid[newY+DELTA][newX+x].st=FREE;
+		}
+	}
+	else if(deltaY==1){
+		for(int x=0;x<DELTA;x++){
+			grid[newY][newX+x].p=*movingPerson;
+			grid[newY][newX+x].st=OCCUPIED;
+
+			grid[movingPerson->y][newX+x].st=FREE;
 		}
 	}
 	if(deltaX!=0){
-
 		for(int y=0;y<DELTA;y++){
+			grid[newY+y][newX].p=*movingPerson;
+			grid[newY+y][newX].st=OCCUPIED;
 
-			grid[movingPerson->y+y][movingPerson->x].p=*movingPerson;
-			grid[movingPerson->y+y][movingPerson->x].st=OCCUPIED;
-
-			grid[movingPerson->y+y][movingPerson->x+DELTA].st=FREE;
-
+			grid[newY+y][newX+DELTA].st=FREE;
+			
 		}
+
 	}
+	//On deplace la personne
+	movingPerson->x+=deltaX;
+	movingPerson->y+=deltaY;
+	if(movingPerson->x==0) {
+		removePerson(grid,movingPerson);
+	}
+	return true;
 
 
 	//Les autres directions ne sont pas utilisees dans ce programme
+}
+
+
+
+void progress(gridElement (*grid)[AREA_LENGTH]){
+	direction tableauDirection[5];
+
+	for(int a=0;a<5000;a++){
+		for(int i=0;i<amountOfPeople;i++){
+			if(allp[i].id!=-1){
+				shortestDistant(grid,allp[i],0,AREA_WIDTH/2,tableauDirection);
+				for(int j=0;j<5;j++){
+					char move=movePerson(grid,tableauDirection[j],&allp[i]);
+					if(move==true) break;
+				}
+				printf("direction: %d, id: %d, x: %d, y: %d\n",tableauDirection[0],allp[i].id,allp[i].x,allp[i].y);
+			}
+		}
+
+		/*for(int i=0;i<amountOfPeople;i++){
+			printf("id: %d, x: %d, y: %d\n",allp[i].id,allp[i].x,allp[i].y);
+		}
+		*/
+		printf("\n");
+
+		/*
+		for(int y=0;y<AREA_WIDTH;y+=4){
+			for(int x=0;x<AREA_LENGTH;x+=4){
+				printf("%d|",grid[y][x].st);
+			}
+			printf("\n");
+		}
+		printf("\n");
+		*/
+	
+	}
 }
 
 
@@ -174,35 +288,25 @@ int main(void){
 	gridElement grid[AREA_WIDTH][AREA_LENGTH];
 	initializeGrid(grid);
 	amountOfPeople=15;
+	allp=malloc(sizeof(person)*amountOfPeople);
 	fillGrid(grid);
 
+	progress(grid);
 	/*person testP;
 	testP.x=400;
 	testP.y=100;
 	testP.id=30;
 	*/
-	addPerson(grid,400,100,30);
 	//grid[100][400].st=OCCUPIED;
 	//grid[100][400].p=testP;
-	for(int y=0;y<AREA_WIDTH;y+=4){
+	/*for(int y=0;y<AREA_WIDTH;y+=4){
 	//	printf("%d: ",y);
 		for(int x=0;x<AREA_LENGTH;x+=4){
 			printf("%d|",grid[y][x].st);
 		}
 		printf("\n");
 	}
-	printf("x: %d, y: %d st:%d, id:%d\n",403,100,grid[100][403].st,grid[100][403].p.id);
-	printf("x: %d, y: %d st:%d, id:%d\n",400,100,grid[100][402].st,grid[100][402].p.id);
-	printf("x: %d, y: %d st:%d, id:%d\n",400,100,grid[100][401].st,grid[100][401].p.id);	
-	printf("x: %d, y: %d st:%d, id:%d\n",400,100,grid[100][400].st,grid[100][400].p.id);
-	printf("x: %d, y: %d st:%d\n",399,100,grid[100][399].st);
-	movePerson(grid,WEST,&grid[100][400].p);
-	printf("\n\n");
-	printf("x: %d, y: %d st:%d\n",403,100,grid[100][403].st);
-	printf("x: %d, y: %d st:%d, id:%d\n",403,100,grid[100][402].st,grid[100][403].p.id);
-	printf("x: %d, y: %d st:%d, id:%d\n",403,100,grid[100][401].st,grid[100][402].p.id);
-	printf("x: %d, y: %d st:%d, id:%d\n",400,100,grid[100][400].st,grid[100][401].p.id);
-	printf("x: %d, y: %d st:%d, id:%d\n",399,100,grid[100][399].st,grid[100][400].p.id);
+	*/
 
 	/*for(int x=0;x<AREA_LENGTH;x++){
 		for(int y=0;y<AREA_WIDTH;y++){
