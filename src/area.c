@@ -38,11 +38,8 @@ void initializeGrid(gridElement (*grid)[AREA_LENGTH]){
 			grid[y][x].st=OCCUPIED;
 		}
 	}
-	/*for(int x=160;x<AREA_LENGTH;x++){
-		grid[AREA_WIDTH-1][x].st=FREE;
-	}
-	*/
 }
+
 
 void addPerson(gridElement (*grid)[AREA_LENGTH], int x ,int y, int id){
 	person p;
@@ -83,11 +80,7 @@ void fillGrid(gridElement (*grid)[AREA_LENGTH]){
 		}
 		//Si on refait pas de rand on ajoute la personne a la grille
 		addPerson(grid,newX,newY,addedId);
-	//	printf("x: %d\n",newX);
-	//	printf("y: %d\n",newY);
-		//grid[newY][newX].st=OCCUPIED;
-		
-		//grid[newY][newX].p=p;
+
 		
 		addedId++;
 	}
@@ -96,7 +89,6 @@ void fillGrid(gridElement (*grid)[AREA_LENGTH]){
 
 void shortestDistant(gridElement (*grid)[AREA_LENGTH], person p, int goalX, int goalY, direction *tableauDirection){
 	double tableauDistance[5];
-	//direction tableauDirection[5];
 	double distanceNord = sqrt((((p.x)-goalX)*((p.x)-goalX))+(((p.y-1)-goalY)*((p.y-1)-goalY)));
 	double distanceSud = sqrt((((p.x)-goalX)*((p.x)-goalX))+(((p.y+1)-goalY)*((p.y+1)-goalY)));
 	double distanceOuest = sqrt((((p.x-1)-goalX)*((p.x-1)-goalX))+(((p.y)-goalY)*((p.y)-goalY)));
@@ -126,16 +118,7 @@ void shortestDistant(gridElement (*grid)[AREA_LENGTH], person p, int goalX, int 
        tableauDistance[j] = elem;
        tableauDirection[j] = element;
    }
-	
-	if(p.x==16 || p.x==160){
-		printf("Position 16, id: %d\n",p.id);
-		for(int k=0;k<5;k++){
-			printf("Classement: %d, Direction: %d, distance: %f\n",k,tableauDirection[k],tableauDistance[k]);
-		}
-	}
-	
-	
-	//return(tableauDirection);
+
 	
 	//On calcule la distance pour chaque direction et met dans un tableau trie
 
@@ -148,7 +131,6 @@ bool canMove(gridElement (*grid)[AREA_LENGTH], int x, int y, int deltaX, int del
 	if(deltaY==-1){
 		for(int dx=0;dx<DELTA;dx++){
 			if(grid[newY][newX+dx].st!=FREE){
-				//printf("x: %d, y: %d\n",newX+dx,newY);
 				return false;
 			}
 		}
@@ -156,7 +138,6 @@ bool canMove(gridElement (*grid)[AREA_LENGTH], int x, int y, int deltaX, int del
 	else if(deltaY==1){
 		for(int dx=0;dx<DELTA;dx++){
 			if(grid[y+DELTA][newX+dx].st!=FREE){
-			//	printf("x: %d, y: %d\n",newX+dx,newY);
 				return false;
 			}
 		}
@@ -165,7 +146,6 @@ bool canMove(gridElement (*grid)[AREA_LENGTH], int x, int y, int deltaX, int del
 		for(int dy=0;dy<DELTA;dy++){
 			if(grid[newY+dy][newX].st!=FREE){
 				if(newX<4){
-					printf("x: %d, y: %d, st:%d \n",newX,newY+dy,grid[newY+dy][newX].st);
 				}
 				return false;
 			}
@@ -177,7 +157,6 @@ bool canMove(gridElement (*grid)[AREA_LENGTH], int x, int y, int deltaX, int del
 void removePerson(gridElement (*grid)[AREA_LENGTH], person *p){
 	for(int x=p->x;x<DELTA;x++){
 		for(int y=p->y;y<p->y+DELTA;y++){
-			//printf("id: %d, x: %d, y: %d\n",p->id,x,y);
 			grid[y][x].st=FREE;
 		}
 	}
@@ -208,9 +187,8 @@ bool movePerson(gridElement (*grid)[AREA_LENGTH], direction dir, person *movingP
 	}
 	
 
-	if(movingPerson->x==16) printf("Dir: %d\n",dir);
+	//if(movingPerson->x==16) printf("Dir: %d\n",dir);
 	if(canMove(grid,movingPerson->x,movingPerson->y,deltaX,deltaY)==false){
-		//printf("id: %d, dir: %d, x: %d, y: %d\n",movingPerson->id,dir,movingPerson->x,movingPerson->y);
 		return false;
 	}
 	
@@ -222,7 +200,7 @@ bool movePerson(gridElement (*grid)[AREA_LENGTH], direction dir, person *movingP
 			grid[newY][newX+x].p=*movingPerson;
 			grid[newY][newX+x].st=OCCUPIED;
 
-			grid[newY+DELTA][newX+x].st=FREE;
+			grid[newY+DELTA][movingPerson->x+x].st=FREE;
 		}
 	}
 	else if(deltaY==1){
@@ -230,7 +208,7 @@ bool movePerson(gridElement (*grid)[AREA_LENGTH], direction dir, person *movingP
 			grid[newY][newX+x].p=*movingPerson;
 			grid[newY][newX+x].st=OCCUPIED;
 
-			grid[movingPerson->y][newX+x].st=FREE;
+			grid[movingPerson->y][movingPerson->x+x].st=FREE;
 		}
 	}
 	if(deltaX!=0){
@@ -238,7 +216,7 @@ bool movePerson(gridElement (*grid)[AREA_LENGTH], direction dir, person *movingP
 			grid[newY+y][newX].p=*movingPerson;
 			grid[newY+y][newX].st=OCCUPIED;
 
-			grid[newY+y][newX+DELTA].st=FREE;
+			grid[movingPerson->y+y][newX+DELTA].st=FREE;
 			
 		}
 
@@ -256,11 +234,10 @@ bool movePerson(gridElement (*grid)[AREA_LENGTH], direction dir, person *movingP
 }
 
 
-
 void progress(gridElement (*grid)[AREA_LENGTH]){
 	direction tableauDirection[5];
 	int count=0;
-	for(int a=0;a<5000;a++){
+	while(true){
 		for(int i=0;i<amountOfPeople;i++){
 			if(allp[i].id!=-1){
 				shortestDistant(grid,allp[i],0,AREA_WIDTH/2,tableauDirection);
@@ -273,28 +250,15 @@ void progress(gridElement (*grid)[AREA_LENGTH]){
 			else count++;
 		}
 		if(count==amountOfPeople){
-			printf("Done\n");
+			printf("All done!\n");
 			break;
 		}
 		else count=0;
-
-		/*for(int i=0;i<amountOfPeople;i++){
-			printf("id: %d, x: %d, y: %d\n",allp[i].id,allp[i].x,allp[i].y);
-		}
-		*/
 		printf("\n");
 
-		/*
-		for(int y=0;y<AREA_WIDTH;y+=4){
-			for(int x=0;x<AREA_LENGTH;x+=4){
-				printf("%d|",grid[y][x].st);
-			}
-			printf("\n");
-		}
-		printf("\n");
-		*/
 	
 	}
+
 }
 
 
@@ -303,33 +267,11 @@ void progress(gridElement (*grid)[AREA_LENGTH]){
 int main(void){
 	gridElement grid[AREA_WIDTH][AREA_LENGTH];
 	initializeGrid(grid);
-	amountOfPeople=15;
+	amountOfPeople=128;
 	allp=malloc(sizeof(person)*amountOfPeople);
 	fillGrid(grid);
 
 	progress(grid);
-	/*person testP;
-	testP.x=400;
-	testP.y=100;
-	testP.id=30;
-	*/
-	//grid[100][400].st=OCCUPIED;
-	//grid[100][400].p=testP;
-	/*for(int y=0;y<AREA_WIDTH;y+=4){
-	//	printf("%d: ",y);
-		for(int x=0;x<AREA_LENGTH;x+=4){
-			printf("%d|",grid[y][x].st);
-		}
-		printf("\n");
-	}
-	*/
-
-	/*for(int x=0;x<AREA_LENGTH;x++){
-		for(int y=0;y<AREA_WIDTH;y++){
-			printf("x:%d, y:%d, status:%d\n",x,y,grid[y][x].st);
-		}
-	}
-	*/
 	
 	return 0;
 }
