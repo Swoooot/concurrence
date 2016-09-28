@@ -95,14 +95,15 @@ void fillGrid(gridElement (*grid)[AREA_LENGTH]){
 }
 
 void shortestDistant(gridElement (*grid)[AREA_LENGTH], person p, int goalX, int goalY, direction *tableauDirection){
-	int tableauDistance[5];
+	double tableauDistance[5];
 	//direction tableauDirection[5];
-	int distanceNord = sqrt((((p.x)-goalX)*((p.x)-goalX))+(((p.y-1)-goalY)*((p.y-1)-goalY)));
-	int distanceSud = sqrt((((p.x)-goalX)*((p.x)-goalX))+(((p.y+1)-goalY)*((p.y+1)-goalY)));
-	int distanceOuest = sqrt((((p.x-1)-goalX)*((p.x-1)-goalX))+(((p.y)-goalY)*((p.y)-goalY)));
-	int distanceNordOuest = sqrt((((p.x-1)-goalX)*((p.x-1)-goalX))+(((p.y-1)-goalY)*((p.y-1)-goalY)));
-	int distanceSudOuest = sqrt((((p.x-1)-goalX)*((p.x-1)-goalX))+(((p.y+1)-goalY)*((p.y+1)-goalY)));
+	double distanceNord = sqrt((((p.x)-goalX)*((p.x)-goalX))+(((p.y-1)-goalY)*((p.y-1)-goalY)));
+	double distanceSud = sqrt((((p.x)-goalX)*((p.x)-goalX))+(((p.y+1)-goalY)*((p.y+1)-goalY)));
+	double distanceOuest = sqrt((((p.x-1)-goalX)*((p.x-1)-goalX))+(((p.y)-goalY)*((p.y)-goalY)));
+	double distanceNordOuest = sqrt((((p.x-1)-goalX)*((p.x-1)-goalX))+(((p.y-1)-goalY)*((p.y-1)-goalY)));
+	double distanceSudOuest = sqrt((((p.x-1)-goalX)*((p.x-1)-goalX))+(((p.y+1)-goalY)*((p.y+1)-goalY)));
 
+	
 	tableauDistance[0] = distanceNord;
 	tableauDirection[0] = NORTH;
 	tableauDistance[1] = distanceSud;
@@ -115,16 +116,23 @@ void shortestDistant(gridElement (*grid)[AREA_LENGTH], person p, int goalX, int 
 	tableauDirection[4] = SOUTHWEST;
 	
 	int i, j;
-	   for (i =1; i < 5; ++i) {
-	       int elem = tableauDistance[i];
-	       direction element = tableauDirection[i];
-	       for (j = i; j > 0 && tableauDistance[j-1] > elem; j--){
-	           	tableauDistance[j] = tableauDistance[j-1];
-	       		tableauDirection[j] = tableauDirection[j-1];}
+   for (i =1; i < 5; ++i) {
+       double elem = tableauDistance[i];
+       direction element = tableauDirection[i];
+       for (j = i; j > 0 && tableauDistance[j-1] > elem; j--){
+           	tableauDistance[j] = tableauDistance[j-1];
+       		tableauDirection[j] = tableauDirection[j-1];}
 
-	       tableauDistance[j] = elem;
-	       tableauDirection[j] = element;
-	   }
+       tableauDistance[j] = elem;
+       tableauDirection[j] = element;
+   }
+	
+	if(p.x==16 || p.x==160){
+		printf("Position 16, id: %d\n",p.id);
+		for(int k=0;k<5;k++){
+			printf("Classement: %d, Direction: %d, distance: %f\n",k,tableauDirection[k],tableauDistance[k]);
+		}
+	}
 	
 	
 	//return(tableauDirection);
@@ -198,7 +206,9 @@ bool movePerson(gridElement (*grid)[AREA_LENGTH], direction dir, person *movingP
 	else if(dir==SOUTH){
 		deltaY=1;
 	}
+	
 
+	if(movingPerson->x==16) printf("Dir: %d\n",dir);
 	if(canMove(grid,movingPerson->x,movingPerson->y,deltaX,deltaY)==false){
 		//printf("id: %d, dir: %d, x: %d, y: %d\n",movingPerson->id,dir,movingPerson->x,movingPerson->y);
 		return false;
@@ -249,7 +259,7 @@ bool movePerson(gridElement (*grid)[AREA_LENGTH], direction dir, person *movingP
 
 void progress(gridElement (*grid)[AREA_LENGTH]){
 	direction tableauDirection[5];
-
+	int count=0;
 	for(int a=0;a<5000;a++){
 		for(int i=0;i<amountOfPeople;i++){
 			if(allp[i].id!=-1){
@@ -260,7 +270,13 @@ void progress(gridElement (*grid)[AREA_LENGTH]){
 				}
 				printf("direction: %d, id: %d, x: %d, y: %d\n",tableauDirection[0],allp[i].id,allp[i].x,allp[i].y);
 			}
+			else count++;
 		}
+		if(count==amountOfPeople){
+			printf("Done\n");
+			break;
+		}
+		else count=0;
 
 		/*for(int i=0;i<amountOfPeople;i++){
 			printf("id: %d, x: %d, y: %d\n",allp[i].id,allp[i].x,allp[i].y);
