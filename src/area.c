@@ -369,6 +369,37 @@ void progress(gridElement (*grid)[AREA_LENGTH]){
 
 
 int main(int argc, char **argv){
+	if (argc >= 1 ){
+
+		for (int i=0; argv[i] != NULL; i++){
+			if ( argv[i][1]=='p'){
+				
+				int puissance = argv[i][2] - 48;
+				
+				amountOfPeople = pow(2,puissance);
+				printf("%d\n",amountOfPeople );
+			}
+			if (argv[i][1]=='t'){
+				if (argv[i][2] == 0){
+
+				}
+				if (argv[i][2] == 1){
+
+				} 
+				if (argv[i][2] == 2){
+
+				}
+
+			}
+			if (argv[i][1]=='m'){
+				//executionTime()
+			}
+
+		}
+		
+
+	}
+	printf("%d\n",amountOfPeople );
 	initializeGrid(grid);
 	amountOfPeople=64;
 	allp=malloc(sizeof(person)*amountOfPeople);
