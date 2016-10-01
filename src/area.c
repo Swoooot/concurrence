@@ -3,6 +3,8 @@
 #include <time.h>
 #include <math.h>
 #include <stdbool.h>
+#include <pthread.h>
+
 
 #include "../headers/area.h"
 
@@ -13,6 +15,7 @@
 
 int amountOfPeople;
 person *allp;
+gridElement grid[AREA_WIDTH][AREA_LENGTH];
 
 //On initialise la grille avec les murs
 void initializeGrid(gridElement (*grid)[AREA_LENGTH]){
@@ -40,7 +43,7 @@ void initializeGrid(gridElement (*grid)[AREA_LENGTH]){
 	}
 }
 
-
+//On ajoute une personne à la grille
 void addPerson(gridElement (*grid)[AREA_LENGTH], int x ,int y, int id){
 	person p;
 	p.id=id;
@@ -57,6 +60,7 @@ void addPerson(gridElement (*grid)[AREA_LENGTH], int x ,int y, int id){
 }
 
 void fillGrid(gridElement (*grid)[AREA_LENGTH]){
+	//Ajoute des personnes a la grille
 	int addedId=0;
 
 	for(int i=0;i<amountOfPeople;i++){
@@ -68,10 +72,10 @@ void fillGrid(gridElement (*grid)[AREA_LENGTH]){
 			for(int j=0;j<4;j++){
 				for(int k=0;k<4;k++){
 					if(grid[newY+j][newX+k].st==OCCUPIED){
+						//Si on arrive ici, une des cases est occupée, on genere un nouveau x et y aleatoirement
 						srand(time(NULL));
 						newX=rand()%(AREA_LENGTH-DELTA);
 						newY=rand()%(AREA_WIDTH-DELTA);
-						//Refaire un rand
 						ok=false;
 					}
 				}
@@ -127,7 +131,7 @@ void shortestDistant(gridElement (*grid)[AREA_LENGTH], person p, int goalX, int 
 bool canMove(gridElement (*grid)[AREA_LENGTH], int x, int y, int deltaX, int deltaY){
 	int newX=x+deltaX;
 	int newY=y+deltaY;
-
+	//On vérifie si les cases vers lesquelles on veut se déplacer sont FREE
 	if(deltaY==-1){
 		for(int dx=0;dx<DELTA;dx++){
 			if(grid[newY][newX+dx].st!=FREE){
@@ -145,8 +149,6 @@ bool canMove(gridElement (*grid)[AREA_LENGTH], int x, int y, int deltaX, int del
 	if(deltaX!=0){
 		for(int dy=0;dy<DELTA;dy++){
 			if(grid[newY+dy][newX].st!=FREE){
-				if(newX<4){
-				}
 				return false;
 			}
 		}
@@ -167,6 +169,7 @@ bool movePerson(gridElement (*grid)[AREA_LENGTH], direction dir, person *movingP
 	int deltaX=0;
 	int deltaY=0;
 
+
 	//On determine le delta sur les coordonnes selon la direction
 	if(dir==NORTHWEST){
 		deltaX=-1;
@@ -186,15 +189,16 @@ bool movePerson(gridElement (*grid)[AREA_LENGTH], direction dir, person *movingP
 		deltaY=1;
 	}
 	
-
 	//if(movingPerson->x==16) printf("Dir: %d\n",dir);
 	if(canMove(grid,movingPerson->x,movingPerson->y,deltaX,deltaY)==false){
 		return false;
 	}
+
 	
 	int newX=movingPerson->x+deltaX;
 	int newY=movingPerson->y+deltaY;
 
+	//Déplacement vertical
 	if(deltaY==-1){
 		for(int x=0;x<DELTA;x++){
 			grid[newY][newX+x].p=*movingPerson;
@@ -211,6 +215,7 @@ bool movePerson(gridElement (*grid)[AREA_LENGTH], direction dir, person *movingP
 			grid[movingPerson->y][movingPerson->x+x].st=FREE;
 		}
 	}
+	//Déplacement horizental
 	if(deltaX!=0){
 		for(int y=0;y<DELTA;y++){
 			grid[newY+y][newX].p=*movingPerson;
@@ -234,18 +239,115 @@ bool movePerson(gridElement (*grid)[AREA_LENGTH], direction dir, person *movingP
 }
 
 
+void *progressFour(void *arg){
+	direction tableauDirection[5];
+	int count=0;
+	int threadId=(int) arg;
+	int beginX, beginY = 0;
+	int endX, endY = 0;
+
+	//Intervalles de coordonnées gérées selon le thread
+	if(threadId==0){
+		beginX=0;
+		beginY=0;
+		endX=AREA_LENGTH/2;
+		endY=AREA_WIDTH/2;
+	}
+	else if(threadId==1){
+		beginX=AREA_LENGTH/2;
+		beginY=0;
+		endX=AREA_LENGTH;
+		endY=AREA_WIDTH/2;
+	}
+	else if(threadId==2){
+		beginX=0;
+		beginY=AREA_WIDTH/2;
+		endX=AREA_LENGTH/2;
+		endY=AREA_WIDTH;
+	}
+	else if(threadId==3){
+		beginX=AREA_LENGTH/2;
+		beginY=AREA_WIDTH/2;
+		endX=AREA_LENGTH;
+		endY=AREA_WIDTH;
+	}
+
+	while(true){
+		for(int i=0;i<amountOfPeople;i++){
+			if(allp[i].id!=-1){
+				person p=allp[i];
+				if((p.x>=beginX && p.x<endX) && (p.y>=beginY && p.y<endY)){
+					shortestDistant(grid,allp[i],0,AREA_WIDTH/2,tableauDirection);
+					for(int j=0;j<5;j++){
+					//	printf("Dir: %d\n",tableauDirection[j]);
+						bool move=movePerson(grid,tableauDirection[j],&allp[i]);
+						if(move==true) break;
+					}
+					//printf("thread: %d, direction: %d, id: %d, x: %d, y: %d\n",threadId,tableauDirection[0],allp[i].id,allp[i].x,allp[i].y);
+				}
+			}
+			else {
+				count++;
+			}
+		}
+		if(count==amountOfPeople){
+			printf("All done!\n");
+			return NULL;
+		}
+		else count=0;
+	}	
+
+
+}
+
+
+
+void fourThreads(gridElement (*grid)[AREA_LENGTH]){
+	//x:256 y:64 millieu
+	pthread_t pth0, pth1, pth2, pth3;
+
+	clock_t t;
+    t = clock();
+    //Creation de 4 threads, on passe en paramètre un entier correspondant au numéro du thread
+	pthread_create(&pth0,NULL,progressFour,(void *)0);
+	pthread_create(&pth1,NULL,progressFour,(void *)1);
+	pthread_create(&pth2,NULL,progressFour,(void *)2);
+	pthread_create(&pth3,NULL,progressFour,(void *)3);
+
+	//Attente de fin d'activité des 4 threads
+	pthread_join(pth0, NULL);
+	pthread_join(pth1, NULL);
+	pthread_join(pth2, NULL);
+	pthread_join(pth3, NULL);
+
+	t = clock() - t;
+    double time_taken = ((double)t)/CLOCKS_PER_SEC;
+
+    printf("Time required (4 threads): %f\n",time_taken);
+	return;
+
+
+
+}
+
 void progress(gridElement (*grid)[AREA_LENGTH]){
 	direction tableauDirection[5];
 	int count=0;
+	//Compteur temps
+	clock_t t;
+    t = clock();
+
+    time_t time(time_t *tloc);
+
 	while(true){
 		for(int i=0;i<amountOfPeople;i++){
 			if(allp[i].id!=-1){
 				shortestDistant(grid,allp[i],0,AREA_WIDTH/2,tableauDirection);
 				for(int j=0;j<5;j++){
-					char move=movePerson(grid,tableauDirection[j],&allp[i]);
+					bool move=movePerson(grid,tableauDirection[j],&allp[i]);
 					if(move==true) break;
 				}
-				printf("direction: %d, id: %d, x: %d, y: %d\n",tableauDirection[0],allp[i].id,allp[i].x,allp[i].y);
+			//	printf("direction: %d, id: %d, x: %d, y: %d\n",tableauDirection[0],allp[i].id,allp[i].x,allp[i].y);
 			}
 			else count++;
 		}
@@ -254,24 +356,26 @@ void progress(gridElement (*grid)[AREA_LENGTH]){
 			break;
 		}
 		else count=0;
-		printf("\n");
+		//printf("\n");
 
 	
 	}
 
+	//Calculer temps passé pour effectuer la simulation
+	t = clock() - t;
+    double time_taken = ((double)t)/CLOCKS_PER_SEC;
+	printf("Time required (1 thread): %f\n",time_taken);
 }
 
 
-
-
-int main(void){
-	gridElement grid[AREA_WIDTH][AREA_LENGTH];
+int main(int argc, char **argv){
 	initializeGrid(grid);
-	amountOfPeople=128;
+	amountOfPeople=64;
 	allp=malloc(sizeof(person)*amountOfPeople);
 	fillGrid(grid);
 
 	progress(grid);
+	//fourThreads(grid);
 	
 	return 0;
 }
