@@ -13,6 +13,7 @@
 #define AREA_WIDTH 128
 #define DELTA 4
 
+bool executionTime = false; 
 int amountOfPeople;
 person *allp;
 gridElement grid[AREA_WIDTH][AREA_LENGTH];
@@ -362,9 +363,11 @@ void progress(gridElement (*grid)[AREA_LENGTH]){
 	}
 
 	//Calculer temps passé pour effectuer la simulation
-	t = clock() - t;
-    double time_taken = ((double)t)/CLOCKS_PER_SEC;
-	printf("Time required (1 thread): %f\n",time_taken);
+	if (executionTime){
+		t = clock() - t;
+	    double time_taken = ((double)t)/CLOCKS_PER_SEC;
+		printf("Time required (1 thread): %f\n",time_taken);
+	}
 }
 
 
@@ -392,7 +395,7 @@ int main(int argc, char **argv){
 
 			}
 			if (argv[i][1]=='m'){
-				//executionTime()
+				executionTime = true;
 			}
 
 		}
