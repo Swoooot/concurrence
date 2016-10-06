@@ -369,6 +369,7 @@ void progress(gridElement (*grid)[AREA_LENGTH]){
 
 
 int main(int argc, char **argv){
+	amountOfPeople=1;
 	if (argc >= 1 ){
 
 		for (int i=0; argv[i] != NULL; i++){
@@ -399,9 +400,9 @@ int main(int argc, char **argv){
 		
 
 	}
-	printf("%d\n",amountOfPeople );
+	printf("%d\n",amountOfPeople);
 	initializeGrid(grid);
-	amountOfPeople=64;
+	//amountOfPeople=64;
 	allp=malloc(sizeof(person)*amountOfPeople);
 	fillGrid(grid);
 
