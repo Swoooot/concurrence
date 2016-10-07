@@ -1,3 +1,6 @@
+//AKHMADOV Baisangour
+//LEVY Cyprien
+
 #ifndef PERSON_H
 #define PERSON_H
 

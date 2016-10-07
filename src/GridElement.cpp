@@ -1,3 +1,6 @@
+//AKHMADOV Baisangour
+//LEVY Cyprien
+
 #include "GridElement.h"
 #include "Person.h"
 #include <iostream>

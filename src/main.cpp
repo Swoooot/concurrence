@@ -1,3 +1,6 @@
+//AKHMADOV Baisangour
+//LEVY Cyprien
+
 #include <iostream>
 #include <vector>
 #include <stdlib.h>
@@ -6,6 +9,7 @@
 #include "Person.h"
 #include "GridElement.h"
 #include "Grid.h"
+#include <sys/time.h>
 
 using namespace std;
 
@@ -42,6 +46,9 @@ void *variableThreads(bool executionTime){
     clock_t t;
     t=clock();
 
+	struct timeval before, after;
+	gettimeofday(&before , NULL);
+
     for(int i=0;i<grid.getAmountOfPeople();i++){
         pthread_create(&tVector[i],NULL,progressVariable,(void *)i);
     }
@@ -52,7 +59,12 @@ void *variableThreads(bool executionTime){
 
     t=clock()-t;
     double time_taken =((double)t)/CLOCKS_PER_SEC;
+
+	gettimeofday(&after , NULL);
+	double respTime=(double) ((after.tv_sec*1000000 + after.tv_usec) - (before.tv_sec*1000000 + before.tv_usec))/1000000;
     if(executionTime) cout << "Time required (" << grid.getAmountOfPeople() <<" threads): " << time_taken << endl;
+	if(executionTime) cout << "Response Time required (" << grid.getAmountOfPeople() << " threads): " << respTime << endl;
+
 }
 
 
@@ -109,7 +121,7 @@ void *progressFour(void *arg){
 			}
 		}
 		if(count==grid.getAmountOfPeople()){
-			cout << "All done!" << endl;
+		//	cout << "All done!" << endl;
 			return NULL;
 		}
 		else count=0;
@@ -125,6 +137,9 @@ void fourThreads(bool executionTime){
 
 	clock_t t;
     t = clock();
+
+	struct timeval before, after;
+	gettimeofday(&before , NULL);
     //Creation de 4 threads, on passe en paramètre un entier correspondant au numéro du thread
 	pthread_create(&pth0,NULL,progressFour,(void *)0);
 	pthread_create(&pth1,NULL,progressFour,(void *)1);
@@ -140,7 +155,13 @@ void fourThreads(bool executionTime){
 	t = clock() - t;
     double time_taken = ((double)t)/CLOCKS_PER_SEC;
 
+	gettimeofday(&after , NULL);
+	double respTime=(double) ((after.tv_sec*1000000 + after.tv_usec) - (before.tv_sec*1000000 + before.tv_usec))/1000000;
+
+
     if(executionTime) cout << "Time required (4 threads): " << time_taken << endl;
+	if(executionTime) cout << "Response Time required (4 threads): " << respTime << endl;
+	
 	return;
 
 
@@ -155,8 +176,9 @@ void progress(bool executionTime){
 	//Compteur temps
 	clock_t t;
     t = clock();
-
-    time_t time(time_t *tloc);
+	
+	struct timeval before, after;
+	gettimeofday(&before , NULL);
 
 	while(true){
 		for(int i=0;i<grid.getAmountOfPeople();i++){
@@ -172,7 +194,7 @@ void progress(bool executionTime){
 			else count++;
 		}
 		if(count==grid.getAmountOfPeople()){
-			cout << "All done!" << endl;
+		//	cout << "All done!" << endl;
 			break;
 		}
 		else count=0;
@@ -187,7 +209,14 @@ void progress(bool executionTime){
 	//Calculer temps passé pour effectuer la simulation
     t = clock() - t;
     double time_taken = ((double)t)/CLOCKS_PER_SEC;
+
+	gettimeofday(&after , NULL);
+	double respTime=(double) ((after.tv_sec*1000000 + after.tv_usec) - (before.tv_sec*1000000 + before.tv_usec))/1000000;
+
+
     if(executionTime) cout << "Time required (1 thread): " << time_taken << endl;
+	if(executionTime) cout << "Response Time required (1 thread): " << respTime << endl;
+
 
 }
 
@@ -210,7 +239,7 @@ int main(int argc, char* argv[])
 				int puissance = argv[i][2] - 48;
 
 				amountOfPeople = pow(2,puissance);
-				cout << amountOfPeople << endl;
+			//	cout << amountOfPeople << endl;
 			}
 			if (argv[i][1]=='t'){
 				if (argv[i][2] == '0'){
@@ -229,7 +258,7 @@ int main(int argc, char* argv[])
 			}
 		}
 	}
-	cout << m << endl;
+	//cout << m << endl;
 
 
 

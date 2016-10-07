@@ -1,3 +1,6 @@
+//AKHMADOV Baisangour
+//LEVY Cyprien
+
 #include <iostream>
 #include "Grid.h"
 #include "Person.h"
@@ -5,6 +8,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <math.h>
+
 
 using namespace std;
 

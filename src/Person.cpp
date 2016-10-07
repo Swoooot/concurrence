@@ -1,5 +1,10 @@
+//AKHMADOV Baisangour
+//LEVY Cyprien
+
 #include "Person.h"
 using namespace std;
+
+
 Person::Person(int id, int x, int y)
 {
     m_x=x;

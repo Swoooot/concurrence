@@ -1,3 +1,6 @@
+//AKHMADOV Baisangour
+//LEVY Cyprien
+
 #include "Person.h"
 
 #ifndef GRIDELEMENT_H
