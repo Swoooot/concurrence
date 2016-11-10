@@ -9,7 +9,6 @@
 #include <time.h>
 #include <math.h>
 
-
 using namespace std;
 
 
@@ -61,7 +60,7 @@ void Grid::addPerson(int x ,int y, int id){
 }
 
 
-void Grid::fillGrid(int amountOfPeople){
+void Grid::fillGridRandom(int amountOfPeople){
 	//Ajoute des personnes a la grille
 	this->amountOfPeople=amountOfPeople;
 	int addedId=0;
@@ -87,6 +86,36 @@ void Grid::fillGrid(int amountOfPeople){
 		}
 		//Si on refait pas de rand on ajoute la personne a la grille
 		addPerson(newX,newY,addedId);
+
+
+		addedId++;
+	}
+
+}
+
+void Grid::fillGridFixed(int amountOfPeople){
+	//Ajoute des personnes a la grille
+	this->amountOfPeople=amountOfPeople;
+	int addedId=0;
+
+	int col=0;
+	int row=0;
+
+	for(int i=0;i<this->amountOfPeople;i++){
+		int x=160 + col*5;
+		int y=1 + row*5;
+
+		if(x>AREA_LENGTH-DELTA){
+            col=0;
+            row++;
+            x=160 + col*5;
+            y=1+ row*5;
+		}
+		else{
+            col++;
+		}
+		//cout << "x: " << x << " , y: " << y << " id: " << addedId <<  endl;
+		addPerson(x,y,addedId);
 
 
 		addedId++;

@@ -10,6 +10,7 @@
 #include "GridElement.h"
 #include "Grid.h"
 #include <sys/time.h>
+#include <semaphore.h>
 
 using namespace std;
 
@@ -19,6 +20,9 @@ vector<Direction> tableauDistance;
 
 
 enum Mode{ONE_THREAD,FOUR_THREADS,VARIABLE};
+
+bool executionTime;
+sem_t sem;
 
 
 void *progressVariable(void *arg){
@@ -40,17 +44,18 @@ void *progressVariable(void *arg){
     }
 }
 
-void *variableThreads(bool executionTime){
+void variableThreads(double &resp, double &cpu){
     vector<pthread_t> tVector(grid.getAmountOfPeople());
 
     clock_t t;
     t=clock();
 
-	struct timeval before, after;
-	gettimeofday(&before , NULL);
+    struct timeval before, after;
+    gettimeofday(&before , NULL);
 
     for(int i=0;i<grid.getAmountOfPeople();i++){
-        pthread_create(&tVector[i],NULL,progressVariable,(void *)i);
+        intptr_t id=i;
+        pthread_create(&tVector[i],NULL,progressVariable,(void *)(id));
     }
 
     for(int i=0;i<grid.getAmountOfPeople();i++){
@@ -60,18 +65,26 @@ void *variableThreads(bool executionTime){
     t=clock()-t;
     double time_taken =((double)t)/CLOCKS_PER_SEC;
 
-	gettimeofday(&after , NULL);
-	double respTime=(double) ((after.tv_sec*1000000 + after.tv_usec) - (before.tv_sec*1000000 + before.tv_usec))/1000000;
-    if(executionTime) cout << "Time required (" << grid.getAmountOfPeople() <<" threads): " << time_taken << endl;
-	if(executionTime) cout << "Response Time required (" << grid.getAmountOfPeople() << " threads): " << respTime << endl;
+    gettimeofday(&after , NULL);
+    double respTime=(double) ((after.tv_sec*1000000 + after.tv_usec) - (before.tv_sec*1000000 + before.tv_usec))/1000000;
+
+    if(executionTime){
+        cout << "Time required (" << grid.getAmountOfPeople() << " threads): " << time_taken << endl;
+        cout << "Response Time required (" << grid.getAmountOfPeople() << " threads): " << respTime << endl;
+        resp=respTime;
+        cpu=time_taken;
+    }
 
 }
 
 
 void *progressFour(void *arg){
+
 	vector<Direction> tableauDirection(5);
 	int count=0;
+
 	int threadId=(int) arg;
+
 	int beginX, beginY = 0;
 	int endX, endY = 0;
 
@@ -100,19 +113,26 @@ void *progressFour(void *arg){
 		endX=AREA_LENGTH;
 		endY=AREA_WIDTH;
 	}
-
 	while(true){
 		for(int i=0;i<grid.getAmountOfPeople();i++){
 			if(grid.getAllP()[i].getId()!=IGNORED){
 				Person p=grid.getAllP()[i];
 				if((p.getX()>=beginX && p.getX()<endX) && (p.getY()>=beginY && p.getY()<endY)){
+
+                  //  sem_wait(&sem); //Semaphore attente
 					grid.shortestDistant(grid.getAllP()[i],0,AREA_WIDTH/2,tableauDirection);
 					for(int j=0;j<tableauDirection.size();j++){
-                       // cout << "Thread Id: " << threadId <<" Direction: " << tableauDirection[0] << " id: " << allp[i].m_id << " x: " << allp[i].m_x << " y: " << allp[i].m_y <<endl;
+                        if(!executionTime){
+                            sem_wait(&sem); //Semaphore attente
+                            cout << "Thread Id: " << threadId << " Direction: " << tableauDirection[0] << " id: " << grid.getAllP()[i].getId() << " x: " << grid.getAllP()[i].getX() << " y: " << grid.getAllP()[i].getY() <<endl;
+                            sem_post(&sem);
+                        }
 					//	printf("Dir: %d\n",tableauDirection[j]);
 						bool move=grid.movePerson(tableauDirection[j],grid.getAllP()[i]);
 						if(move==true) break;
 					}
+                    //sem_post(&sem); //Semaphore liberation
+
 			//		cout << "Thread Id: " << threadId << " Direction: " << tableauDirection[0] << " Pid: " << grid.getAllP()[i].getId() << " x: " << grid.getAllP()[i].getX() << " y: " << grid.getAllP()[i].getY() <<endl;
 				}
 			}
@@ -120,8 +140,8 @@ void *progressFour(void *arg){
 				count++;
 			}
 		}
+       // updateDisplay();
 		if(count==grid.getAmountOfPeople()){
-		//	cout << "All done!" << endl;
 			return NULL;
 		}
 		else count=0;
@@ -132,55 +152,57 @@ void *progressFour(void *arg){
 
 
 
-void fourThreads(bool executionTime){
-	pthread_t pth0, pth1, pth2, pth3;
+void fourThreads(double &resp, double &cpu){
+    sem_init(&sem,0,1);
+    int tAmount=4;
+    vector<pthread_t> tVector(tAmount);
 
-	clock_t t;
-    t = clock();
+    clock_t t;
+    t=clock();
 
-	struct timeval before, after;
-	gettimeofday(&before , NULL);
-    //Creation de 4 threads, on passe en paramètre un entier correspondant au numéro du thread
-	pthread_create(&pth0,NULL,progressFour,(void *)0);
-	pthread_create(&pth1,NULL,progressFour,(void *)1);
-	pthread_create(&pth2,NULL,progressFour,(void *)2);
-	pthread_create(&pth3,NULL,progressFour,(void *)3);
+    struct timeval before, after;
+    gettimeofday(&before , NULL);
 
-	//Attente de fin d'activité des 4 threads
-	pthread_join(pth0, NULL);
-	pthread_join(pth1, NULL);
-	pthread_join(pth2, NULL);
-	pthread_join(pth3, NULL);
+    for(int i=0;i<tAmount;i++){
+        intptr_t id=i;
+        pthread_create(&tVector[i],NULL,progressFour,(void *)(id));
+    }
 
-	t = clock() - t;
-    double time_taken = ((double)t)/CLOCKS_PER_SEC;
+    for(int i=0;i<tAmount;i++){
+        pthread_join(tVector[i],NULL);
+    }
 
-	gettimeofday(&after , NULL);
-	double respTime=(double) ((after.tv_sec*1000000 + after.tv_usec) - (before.tv_sec*1000000 + before.tv_usec))/1000000;
+    t=clock()-t;
+    double time_taken =((double)t)/CLOCKS_PER_SEC;
 
+    gettimeofday(&after , NULL);
+    double respTime=(double) ((after.tv_sec*1000000 + after.tv_usec) - (before.tv_sec*1000000 + before.tv_usec))/1000000;
 
-    if(executionTime) cout << "Time required (4 threads): " << time_taken << endl;
-	if(executionTime) cout << "Response Time required (4 threads): " << respTime << endl;
-	
-	return;
+    if(executionTime){
+        cout << "Time required (" << tAmount << " threads): " << time_taken << endl;
+        cout << "Response Time required (" << tAmount << " threads): " << respTime << endl;
+        resp=respTime;
+        cpu=time_taken;
+    }
 
-
+    return;
 
 }
 
 
 
-void progress(bool executionTime){
+void progress(double &resp, double &cpu){
 	vector<Direction> tableauDirection(5);
 	int count=0;
 	//Compteur temps
 	clock_t t;
     t = clock();
-	
-	struct timeval before, after;
-	gettimeofday(&before , NULL);
+
+    struct timeval before, after;
+    gettimeofday(&before , NULL);
 
 	while(true){
+
 		for(int i=0;i<grid.getAmountOfPeople();i++){
 			if(grid.getAllP()[i].getId()!=IGNORED){
 				grid.shortestDistant(grid.getAllP()[i],0,AREA_WIDTH/2,tableauDirection);
@@ -188,7 +210,7 @@ void progress(bool executionTime){
 					bool move=grid.movePerson(tableauDirection[j],grid.getAllP()[i]);
 					if(move==true) break;
 				}
-				//cout << "Direction: " << tableauDirection[0] << " id: " << grid.getAllP()[i].getId() << " x: " << grid.getAllP()[i].getX() << " y: " << grid.getAllP()[i].getY() <<endl;
+			//	cout << "Direction: " << tableauDirection[0] << " id: " << grid.getAllP()[i].getId() << " x: " << grid.getAllP()[i].getX() << " y: " << grid.getAllP()[i].getY() <<endl;
 			//	printf("direction: %d, id: %d, x: %d, y: %d\n",tableauDirection[0],allp[i].id,allp[i].x,allp[i].y);
 			}
 			else count++;
@@ -199,10 +221,6 @@ void progress(bool executionTime){
 		}
 		else count=0;
 
-		//cout << endl;
-		//printf("\n");
-
-
 
 	}
 
@@ -210,12 +228,17 @@ void progress(bool executionTime){
     t = clock() - t;
     double time_taken = ((double)t)/CLOCKS_PER_SEC;
 
-	gettimeofday(&after , NULL);
-	double respTime=(double) ((after.tv_sec*1000000 + after.tv_usec) - (before.tv_sec*1000000 + before.tv_usec))/1000000;
+    gettimeofday(&after , NULL);
+    double respTime=(double) ((after.tv_sec*1000000 + after.tv_usec) - (before.tv_sec*1000000 + before.tv_usec))/1000000;
 
 
-    if(executionTime) cout << "Time required (1 thread): " << time_taken << endl;
-	if(executionTime) cout << "Response Time required (1 thread): " << respTime << endl;
+
+    if(executionTime){
+        cout << "CPU Time required (1 thread): " << time_taken << endl;
+        cout << "Response Time required (1 thread): " << respTime << endl;
+        resp=respTime;
+        cpu=time_taken;
+    }
 
 
 }
@@ -225,10 +248,10 @@ void progress(bool executionTime){
 
 int main(int argc, char* argv[])
 {
-    srand(time(NULL));
     int amountOfPeople=32; //Default value
-    bool executionTime=false;
+    executionTime=false;
     Mode m=ONE_THREAD;
+
 
     //Parsing arguments
     if (argc >= 1 ){
@@ -239,7 +262,6 @@ int main(int argc, char* argv[])
 				int puissance = argv[i][2] - 48;
 
 				amountOfPeople = pow(2,puissance);
-			//	cout << amountOfPeople << endl;
 			}
 			if (argv[i][1]=='t'){
 				if (argv[i][2] == '0'){
@@ -258,28 +280,74 @@ int main(int argc, char* argv[])
 			}
 		}
 	}
-	//cout << m << endl;
 
+	//Affichage paramètres
+	switch(m){
+        case ONE_THREAD:
+            cout << "Mode: 1 thread" << endl;
+            break;
+        case FOUR_THREADS:
+            cout << "Mode: 4 threads" << endl;
+            break;
+        case VARIABLE:
+            cout << "Mode: 1 thread par personne" << endl;
+            break;
+	}
+    cout << "Nombre de personnes: " << amountOfPeople << endl;
+    if(executionTime) cout << "Mesure du temps activee" << endl;
+    else cout << "Aucune mesure" << endl;
+    cout << endl;
 
 
     /////////////////////////////////
 
-    grid.fillGrid(amountOfPeople);
-
-    switch(m){
-        case ONE_THREAD:
-            progress(executionTime);
-            break;
-        case FOUR_THREADS:
-            fourThreads(executionTime);
-            break;
-        case VARIABLE:
-            variableThreads(executionTime);
-            break;
+    double resp;
+    double cpu;
+    if(executionTime){
+        double meanResp=0;
+        double meanCpu=0;
+        for(int i=0;i< 5;i++){
+            cout << "Mesure " << i+1 << endl;
+            Grid reset;
+            grid=reset;
+            grid.fillGridFixed(amountOfPeople);
+            switch(m){
+                case ONE_THREAD:
+                    progress(resp,cpu);
+                    break;
+                case FOUR_THREADS:
+                    fourThreads(resp,cpu);
+                    break;
+                case VARIABLE:
+                    variableThreads(resp,cpu);
+                    break;
+            }
+            if(i>=1 && i <=3){
+                meanResp+=resp;
+                meanCpu+=cpu;
+            }
+        }
+        meanResp/=3;
+        meanCpu/=3;
+        cout << endl;
+        cout << "Mean Response Time: " << meanResp << endl;
+        cout << "Mean CPU Time: " << meanCpu << endl;
     }
-	//
+    else{
 
-
+        grid.fillGridFixed(amountOfPeople);
+        switch(m){
+            case ONE_THREAD:
+                progress(resp,cpu);
+                break;
+            case FOUR_THREADS:
+                fourThreads(resp,cpu);
+                break;
+            case VARIABLE:
+                variableThreads(resp,cpu);
+                break;
+        }
+    }
 
 
 

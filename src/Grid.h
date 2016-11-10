@@ -1,6 +1,5 @@
 //AKHMADOV Baisangour
 //LEVY Cyprien
-
 #include <vector>
 #include "Person.h"
 #include "GridElement.h"
@@ -24,7 +23,8 @@ class Grid
 
         void initializeGrid();
         void addPerson(int x ,int y, int id);
-        void fillGrid(int amountOfPeople);
+        void fillGridRandom(int amountOfPeople);
+        void fillGridFixed(int amountOfPeople);
         void shortestDistant(Person p, int goalX, int goalY, vector<Direction> &tableauDirection);
         bool canMove(int x, int y, int deltaX, int deltaY);
         void removePerson(Person &p);
