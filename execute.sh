@@ -1,2 +1,3 @@
 #!/bin/bash
-bin/main.exe -t1 -p4 -m
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+$DIR/bin/main.exe -t1 -p4 -m
