@@ -30,7 +30,8 @@ sem_t sem;
 
 void *progressVariable(void *arg){
     vector<Direction> tableauDirection(5);
-    int personId=(int) arg;
+    //int personId=(int) arg;
+    intptr_t personId=(intptr_t) arg;
     Person &p=grid.getAllP()[personId];
 
     while(true){
