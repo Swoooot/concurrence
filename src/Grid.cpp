@@ -94,6 +94,7 @@ void Grid::fillGridRandom(int amountOfPeople){
 }
 
 void Grid::fillGridFixed(int amountOfPeople){
+	
 	//Ajoute des personnes a la grille
 	this->amountOfPeople=amountOfPeople;
 	int addedId=0;
@@ -102,14 +103,14 @@ void Grid::fillGridFixed(int amountOfPeople){
 	int row=0;
 
 	for(int i=0;i<this->amountOfPeople;i++){
-		int x=160 + col*5;
-		int y=1 + row*5;
+		int x=166 + col*10;
+		int y=1 + row*10;
 
 		if(x>AREA_LENGTH-DELTA){
             col=0;
             row++;
-            x=160 + col*5;
-            y=1+ row*5;
+            x=166 + col*10;
+            y=1+ row*10;
 		}
 		else{
             col++;
@@ -120,6 +121,7 @@ void Grid::fillGridFixed(int amountOfPeople){
 
 		addedId++;
 	}
+
 
 }
 
