@@ -30,9 +30,8 @@ sem_t sem;
 
 void *progressVariable(void *arg){
     vector<Direction> tableauDirection(5);
-    //int personId=(int) arg;
-    intptr_t personId=(intptr_t) arg;
-    Person &p=grid.getAllP()[personId];
+    //On recupère le paramètre qui correspond à la personne qui est gérée par le thread
+    Person p=*reinterpret_cast<Person*>(arg);
 
     while(true){
         if(p.getId()!=IGNORED){
@@ -40,6 +39,7 @@ void *progressVariable(void *arg){
             for(int j=0;j<tableauDirection.size();j++){
                 if(s==TWO) sem_wait(&sem);
                 bool move=grid.movePerson(tableauDirection[j],p);
+                //cout << "Thread Id: " << p.getId() << " Direction: " << tableauDirection[0] << " id: " << p.getId() << " x: " << p.getX() << " y: " << p.getY() <<endl;
                 if(s==TWO) sem_post(&sem);
                 if(move==true) break;
 
@@ -53,7 +53,7 @@ void *progressVariable(void *arg){
 
 void variableThreads(double &resp, double &cpu){
     vector<pthread_t> tVector(grid.getAmountOfPeople());
-
+    vector<Person> &pVect=grid.getAllP();
     if(s==TWO) sem_init(&sem,0,1); //Si etape 2, initialisation de la semaphore
 
     clock_t t;
@@ -66,8 +66,7 @@ void variableThreads(double &resp, double &cpu){
 
 
     for(int i=0;i<grid.getAmountOfPeople();i++){
-        intptr_t id=i;
-        pthread_create(&tVector[i],NULL,progressVariable,(void *)(id));
+        pthread_create(&tVector[i],NULL,progressVariable,&pVect[i]);
     }
 
     for(int i=0;i<grid.getAmountOfPeople();i++){
@@ -94,8 +93,7 @@ void *progressFour(void *arg){
 
     vector<Direction> tableauDirection(5);
 
-
-    ThreadArg &ta= *reinterpret_cast<ThreadArg*>(arg); //Cette structure contient les limites des coordonnées gérées par le thread
+    ThreadArg &ta= *reinterpret_cast<ThreadArg*>(arg); //Cet objet contient les limites des coordonnées gérées par le thread
 
 
     while(true){
@@ -111,7 +109,7 @@ void *progressFour(void *arg){
             }
 
             if(grid.getAllP()[i].getId()==IGNORED) {
-                    leftCount--;
+                leftCount--;
             }
 
         }
@@ -302,19 +300,19 @@ int main(int argc, char* argv[])
     }
 
     //Affichage paramètres
-    cout << "Etape: " << s+1 << endl;
+    cout << "Etape : " << s+1 << endl;
     switch(m){
         case ONE_THREAD:
-            cout << "Mode: 1 thread" << endl;
+            cout << "Mode : 1 thread" << endl;
             break;
         case FOUR_THREADS:
-            cout << "Mode: 4 threads" << endl;
+            cout << "Mode : 4 threads" << endl;
             break;
         case VARIABLE:
-            cout << "Mode: 1 thread par personne" << endl;
+            cout << "Mode : 1 thread par personne" << endl;
             break;
     }
-    cout << "Nombre de personnes: " << amountOfPeople << endl;
+    cout << "Nombre de personnes : " << amountOfPeople << endl;
     if(executionTime) cout << "Mesure du temps activee" << endl;
     else cout << "Aucune mesure" << endl;
     cout << endl;
