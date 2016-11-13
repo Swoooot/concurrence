@@ -25,7 +25,8 @@ enum Step{ONE, TWO, THREE};
 
 Step s;
 bool executionTime;
-sem_t sem;
+sem_t sem; //Mutex
+sem_t waitsem;
 
 
 void *progressVariable(void *arg){
@@ -48,6 +49,7 @@ void *progressVariable(void *arg){
         }
         else{
             //La personne gérée par le thread a atteint la sortie
+            if(s==TWO) sem_post(&waitsem);
             return NULL;
         }
     }
@@ -57,7 +59,10 @@ void *progressVariable(void *arg){
 void variableThreads(double &resp, double &cpu){
     vector<pthread_t> tVector(grid.getAmountOfPeople());
     vector<Person> &pVect=grid.getAllP();
-    if(s==TWO) sem_init(&sem,0,1); //Si etape 2, initialisation de la semaphore
+    if(s==TWO) {
+        sem_init(&sem,0,1); //Si etape 2, initialisation de la semaphore mutex
+        sem_init(&waitsem,0,grid.getAmountOfPeople()); //Semaphore qui va remplacer les join pour l'etape 2
+    }
 
     //Variable temps
     clock_t t;
@@ -70,13 +75,14 @@ void variableThreads(double &resp, double &cpu){
 
 
     for(int i=0;i<grid.getAmountOfPeople();i++){
+        if(s==TWO) sem_wait(&waitsem);
         pthread_create(&tVector[i],NULL,progressVariable,&pVect[i]);
     }
 
     for(int i=0;i<grid.getAmountOfPeople();i++){
-        pthread_join(tVector[i],NULL);
+        if(s==ONE) pthread_join(tVector[i],NULL);
+        else if(s==TWO) sem_wait(&waitsem);
     }
-
 
     //Calcul temps
     t=clock()-t;
@@ -122,9 +128,10 @@ void *progressFour(void *arg){
         }
         if(s==TWO) sem_post(&sem); //On libere la semaphore
 
-
+        //Si on arrive la toutes les personne ont atteint la sortie
         if(leftCount==0) { //Si toutes les personnes sont arrivees a destination on arrete la fonction
-                return NULL;
+            if(s==TWO) sem_post(&waitsem);
+            return NULL;
         }
 
         //On déplace les personnes
@@ -150,10 +157,14 @@ void *progressFour(void *arg){
 }
 
 
-//Fonction qui cree les 4 threads et lance la simulation 4 threads
+//Fonction qui cree les 4 threads et lance la simulation avec 4 threads
 void fourThreads(double &resp, double &cpu){
-    if(s==TWO) sem_init(&sem,0,1); //Si etape 2, initialisation de la semaphore
     int tAmount=4;
+    if(s==TWO) {
+        sem_init(&sem,0,1); //Si etape 2, initialisation de la semaphore mutex
+        sem_init(&waitsem,0,tAmount); //Semaphore qui va remplacer les join pour l'etape 2
+    }
+
     vector<pthread_t> tVector(tAmount);
 
     //Variables temps
@@ -179,13 +190,15 @@ void fourThreads(double &resp, double &cpu){
 
 
     for(int i=0;i<tAmount;i++){
+        if(s==TWO) sem_wait(&waitsem);
         pthread_create(&tVector[i],NULL,progressFour,&threadArgs[i]);
     }
 
-    for(int i=0;i<tAmount;i++){
-        pthread_join(tVector[i],NULL);
-    }
 
+    for(int i=0;i<tAmount;i++){
+        if(s==ONE) pthread_join(tVector[i],NULL);
+        else if(s==TWO) sem_wait(&waitsem);
+    }
 
     //Calcul temps
     t=clock()-t;
@@ -206,12 +219,11 @@ void fourThreads(double &resp, double &cpu){
 
 }
 
-
 //Simulation 1 thread
 void progress(double &resp, double &cpu){
     vector<Direction> tableauDirection(5);
     int count=0;
-    //Compteur temps
+    //Variables temps
     clock_t t;
     t = clock();
 
@@ -248,7 +260,7 @@ void progress(double &resp, double &cpu){
     double respTime=(double) ((after.tv_sec*1000000 + after.tv_usec) - (before.tv_sec*1000000 + before.tv_usec))/1000000;
 
 
-
+    //Affichage temps
     if(executionTime){
         cout << "CPU Time required (1 thread): " << time_taken << endl;
         cout << "Response Time required (1 thread): " << respTime << endl;
@@ -343,7 +355,8 @@ int main(int argc, char* argv[])
                 Grid reset;
                 grid=reset;
             }
-            grid.fillGridFixed(amountOfPeople);
+            grid.fillGridRandom
+            (amountOfPeople);
 
             switch(m){
                 case ONE_THREAD:
@@ -369,8 +382,7 @@ int main(int argc, char* argv[])
     }
     //Execution sans mesures
     else{
-
-        grid.fillGridFixed(amountOfPeople);
+        grid.fillGridRandom(amountOfPeople);
         switch(m){
             case ONE_THREAD:
                 progress(resp,cpu);
