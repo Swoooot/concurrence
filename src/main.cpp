@@ -35,6 +35,7 @@ void *progressVariable(void *arg){
 
     while(true){
         if(p.getId()!=IGNORED){
+            //On calcule les distances et effectue le deplacement
             grid.shortestDistant(p,0,AREA_WIDTH/2,tableauDirection);
             for(int j=0;j<tableauDirection.size();j++){
                 if(s==TWO) sem_wait(&sem);
@@ -46,16 +47,19 @@ void *progressVariable(void *arg){
             }
         }
         else{
+            //La personne gérée par le thread a atteint la sortie
             return NULL;
         }
     }
 }
 
+//Creation un thread par personne et lancement simulation avec ceux-ci
 void variableThreads(double &resp, double &cpu){
     vector<pthread_t> tVector(grid.getAmountOfPeople());
     vector<Person> &pVect=grid.getAllP();
     if(s==TWO) sem_init(&sem,0,1); //Si etape 2, initialisation de la semaphore
 
+    //Variable temps
     clock_t t;
     t=clock();
 
@@ -73,12 +77,15 @@ void variableThreads(double &resp, double &cpu){
         pthread_join(tVector[i],NULL);
     }
 
+
+    //Calcul temps
     t=clock()-t;
     double time_taken =((double)t)/CLOCKS_PER_SEC;
 
     gettimeofday(&after , NULL);
     double respTime=(double) ((after.tv_sec*1000000 + after.tv_usec) - (before.tv_sec*1000000 + before.tv_usec))/1000000;
 
+    //Affichage temps
     if(executionTime){
         cout << "CPU Time required (" << grid.getAmountOfPeople() << " threads): " << time_taken << endl;
         cout << "Response Time required (" << grid.getAmountOfPeople() << " threads): " << respTime << endl;
@@ -99,7 +106,7 @@ void *progressFour(void *arg){
     while(true){
         vector<Person *> pVect;
 
-
+        //On détermine les personnes que le thread déplace
         if(s==TWO) sem_wait(&sem); //Si on est dans l'étape 2 on fait down sur la semaphore ici
         int leftCount=grid.getAmountOfPeople();
         for(int i=0;i<grid.getAmountOfPeople();i++){
@@ -120,6 +127,7 @@ void *progressFour(void *arg){
                 return NULL;
         }
 
+        //On déplace les personnes
         for(int i=0;i<pVect.size();i++){
             if(pVect[i]->getId()!=IGNORED){
                 Person *p=pVect[i];
@@ -142,19 +150,20 @@ void *progressFour(void *arg){
 }
 
 
-
+//Fonction qui cree les 4 threads et lance la simulation 4 threads
 void fourThreads(double &resp, double &cpu){
     if(s==TWO) sem_init(&sem,0,1); //Si etape 2, initialisation de la semaphore
     int tAmount=4;
     vector<pthread_t> tVector(tAmount);
 
+    //Variables temps
     clock_t t;
     t=clock();
 
     struct timeval before, after;
     gettimeofday(&before , NULL);
 
-    //Creation liste de personnes par thread
+    //Creation parametres de thread (contient les limites de coordonnes pour le thread)
     vector<ThreadArg> threadArgs;
 
 
@@ -178,12 +187,14 @@ void fourThreads(double &resp, double &cpu){
     }
 
 
+    //Calcul temps
     t=clock()-t;
     double time_taken =((double)t)/CLOCKS_PER_SEC;
 
     gettimeofday(&after , NULL);
     double respTime=(double) ((after.tv_sec*1000000 + after.tv_usec) - (before.tv_sec*1000000 + before.tv_usec))/1000000;
 
+    //Affichage temps
     if(executionTime){
         cout << "CPU Time required (" << tAmount << " threads): " << time_taken << endl;
         cout << "Response Time required (" << tAmount << " threads): " << respTime << endl;
@@ -196,7 +207,7 @@ void fourThreads(double &resp, double &cpu){
 }
 
 
-
+//Simulation 1 thread
 void progress(double &resp, double &cpu){
     vector<Direction> tableauDirection(5);
     int count=0;
@@ -322,6 +333,7 @@ int main(int argc, char* argv[])
 
     double resp;
     double cpu;
+    //Execution avec mesures temps
     if(executionTime){
         double meanResp=0;
         double meanCpu=0;
@@ -355,6 +367,7 @@ int main(int argc, char* argv[])
         cout << "Mean Response Time: " << meanResp << endl;
         cout << "Mean CPU Time: " << meanCpu << endl;
     }
+    //Execution sans mesures
     else{
 
         grid.fillGridFixed(amountOfPeople);

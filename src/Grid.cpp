@@ -50,7 +50,7 @@ void Grid::addPerson(int x ,int y, int id){
 	p.setX(x);
 	p.setY(y);
 	this->allp.push_back(p);
-	//Faut l'ajotuer au 4*4
+	//Faut l'ajotuer au 4*4 cases
 	for(int j=0;j<4;j++){
 		for(int k=0;k<4;k++){
 			this->grid[y+j][x+k].setStatus(OCCUPIED);
@@ -61,7 +61,7 @@ void Grid::addPerson(int x ,int y, int id){
 
 
 void Grid::fillGridRandom(int amountOfPeople){
-	//Ajoute des personnes a la grille
+	//Ajoute des personnes a la grille de maniere aleatoire
 	this->amountOfPeople=amountOfPeople;
 	int addedId=0;
 
@@ -95,7 +95,7 @@ void Grid::fillGridRandom(int amountOfPeople){
 
 void Grid::fillGridFixed(int amountOfPeople){
 	
-	//Ajoute des personnes a la grille
+	//Ajoute des personnes a la grille avec des coordonnees fixes
 	this->amountOfPeople=amountOfPeople;
 	int addedId=0;
 
@@ -126,10 +126,10 @@ void Grid::fillGridFixed(int amountOfPeople){
 }
 
 void Grid::shortestDistant(Person p, int goalX, int goalY, vector<Direction> &tableauDirection){
+	//On calcule la distance pour chaque direction et met dans un tableau trie
 
 	vector<double> tableauDistance(5);
 
-	//TODO getter pour p au lieu d'acces direct
 	double distanceNord = sqrt((((p.getX())-goalX)*((p.getX())-goalX))+(((p.getY()-1)-goalY)*((p.getY()-1)-goalY)));
 	double distanceSud = sqrt((((p.getX())-goalX)*((p.getX())-goalX))+(((p.getY()+1)-goalY)*((p.getY()+1)-goalY)));
 	double distanceOuest = sqrt((((p.getX()-1)-goalX)*((p.getX()-1)-goalX))+(((p.getY())-goalY)*((p.getY())-goalY)));
@@ -161,10 +161,10 @@ void Grid::shortestDistant(Person p, int goalX, int goalY, vector<Direction> &ta
     }
 
 
-	//On calcule la distance pour chaque direction et met dans un tableau trie
 
 }
 
+//Supprime une personne de la grille
 void Grid::removePerson(Person &p){
 	for(int x=p.getX();x<p.getX()+DELTA;x++){
 		for(int y=p.getY();y<p.getY()+DELTA;y++){
@@ -204,6 +204,7 @@ bool Grid::canMove(int x, int y, int deltaX, int deltaY){
 	return true;
 }
 
+//Deplace la personne movingPerson dans la direction dir
 bool Grid::movePerson(Direction dir, Person &movingPerson){
 	int deltaX=0;
 	int deltaY=0;
@@ -228,6 +229,7 @@ bool Grid::movePerson(Direction dir, Person &movingPerson){
 	else if(dir==SOUTH){
 		deltaY=1;
 	}
+	//Les autres directions ne sont pas utilisees dans ce programme
 
 	if(canMove(movingPerson.getX(),movingPerson.getY(),deltaX,deltaY)==false){
 		return false;
@@ -268,16 +270,13 @@ bool Grid::movePerson(Direction dir, Person &movingPerson){
 	}
 	//On deplace la personne
 	movingPerson.movePerson(dir);
-	//movingPerson.m_x+=deltaX;
-	//movingPerson.m_y+=deltaY;
-	//cout << "After movement: x: "<< movingPerson.m_x << " y: " << movingPerson.m_y <<endl;
+	
 	if(movingPerson.getX()==0) {
 		removePerson(movingPerson);
 	}
 	return true;
 
 
-	//Les autres directions ne sont pas utilisees dans ce programme
 }
 
 
